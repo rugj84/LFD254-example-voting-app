@@ -1,0 +1,53 @@
+version: "3.8"
+
+name: "voting-app"
+
+networks:
+  vote:
+    driver: bridge
+
+services:
+  vote:
+    image: rugj84/vote:latest
+    build:
+      context: ./vote
+      dockerfile: Dockerfile
+    ports:
+      - 80
+    depends_on:
+      - redis
+    networks:
+      - vote
+  redis:
+    image: redis:latest
+    networks:
+      - vote
+  worker:
+    image: rugj84/worker:latest
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+      - db
+    networks:
+      - vote
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: votes
+    networks:
+      - vote
+  result:
+    image: rugj84/result:latest
+    build:
+      context: ./result
+      dockerfile: Dockerfile
+    ports:
+      - 80
+    depends_on:
+      - db
+    networks:
+      - vote
